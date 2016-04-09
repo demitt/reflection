@@ -17,7 +17,7 @@ public class App {
             System.out.println("Паникуем и прекращаем работу.");
             return;
         }
-        System.out.println("Прочли данные класса в JSON:");
+        System.out.println("Прочли поля класса в JSON:");
         System.out.println(jsonString);
 
         boolean writeResult = Storage.writeFile(jsonString);

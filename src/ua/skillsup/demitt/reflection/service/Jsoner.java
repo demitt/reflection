@@ -15,8 +15,8 @@ import java.util.List;
 
 public class Jsoner {
 
-    /*Получение JSON-представления полей экземплчра класса.
-    В случае ошибки чтения вернет null.
+    /*Получение JSON-представления полей экземпляра класса.
+    В случае ошибки вернет null.
     */
     public static String toJson(Object obj) {
         Class clazz = obj.getClass();
@@ -32,14 +32,12 @@ public class Jsoner {
             isNotAccessible = false;
 
             //Получаем имя поля:
-            //TODO поместить после получения значения!
             fieldNameRaw = field.getName();
-            if (field.isAnnotationPresent(JsonValue.class)) {
+            if ( customNameNeed(field) ) {
                 fieldName = field.getAnnotation(JsonValue.class).value();
             } else {
                 fieldName = fieldNameRaw;
             }
-            //System.out.println("Подтюненое имя поля: " + fieldName);
 
             //Получаем тип и значение поля:
 
@@ -56,7 +54,7 @@ public class Jsoner {
             for (DataType currDataType : DataType.values()) { //по всем эл-там перечисления (а это список типов)
                 if (fieldTypeString.equals(currDataType.getType())) { //да, это наш тип
                     dataType = currDataType;
-                    typeIsFound = true;
+                    typeIsFound = true; //"ура, мы наши этот тип в нашем списке!"
 
                     //Получаем тип:
                     /*Тип уже находится в переменной fieldTypeString.
@@ -66,20 +64,20 @@ public class Jsoner {
 
                     //Получаем значение:
                     try {
-                        if (/*currDataType.canBeNull() &&*/ field.get(obj) == null) { //может быть null и равен null
+                        if (field.get(obj) == null) {
                             continue nextField;
                         }
                         fieldValueRaw = field.get(obj);
-                        fieldValueString = fieldValueRaw.toString();
                     }
                     catch (IllegalAccessException e) {
                         System.out.println("Произошла ошибка чтения поля" + fieldNameRaw);
                         e.printStackTrace();
                         return null;
                     }
+                    fieldValueString = fieldValueRaw.toString();
 
                     //Проверим, не требуется ли нам некое особое форматирование даты:
-                    if (field.isAnnotationPresent(CustomDateFormat.class)) { //да, есть такая аннотация
+                    if ( customDateFormatNeed(field) ) { //да, требуется
                         //Проверим, чтобы это было именно DataType.LOCALDATE:
                         if (!fieldTypeString.equals(DataType.LOCALDATE.getType())) {
                             System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldNameRaw);
@@ -130,6 +128,14 @@ public class Jsoner {
         }
         sb.append("\n}");
         return sb.toString();
+    }
+
+    private static boolean customDateFormatNeed(Field field) {
+        return field.isAnnotationPresent(CustomDateFormat.class);
+    }
+
+    private static boolean customNameNeed(Field field) {
+        return field.isAnnotationPresent(JsonValue.class);
     }
 
 }
