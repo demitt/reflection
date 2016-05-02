@@ -2,15 +2,14 @@ package ua.skillsup.demitt.reflection.service;
 
 import ua.skillsup.demitt.reflection.annotation.CustomDateFormat;
 import ua.skillsup.demitt.reflection.annotation.JsonValue;
-import ua.skillsup.demitt.reflection.data.Data;
 import ua.skillsup.demitt.reflection.data.Entity;
 import ua.skillsup.demitt.reflection.io.Storage;
 import ua.skillsup.demitt.reflection.laboratory.User;
 
 import java.lang.reflect.Field;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class Service {
 
     public static void start() {
 
-        System.out.println("Reflection API.");
+        System.out.println("Reflection + JUnit.");
 
         User obj = new User(null, "Дибенко", LocalDate.of(1980, 3, 23), "Человек-без-лица", LocalDate.of(2012, 4, 16), "Ubuntu 12.04", 42, 100);
 
@@ -38,7 +37,7 @@ public class Service {
         System.out.println("Записали данные в файл.");
 
         //TODO
-        //String readedJsonString = Storage.readFile();
+        //String readJsonString = Storage.readFile();
     }
 
 
@@ -49,7 +48,8 @@ public class Service {
         Class clazz = obj.getClass();
         List<Entity> dataList = new ArrayList<>();
 
-        dataList.add( new Entity(Data.DESCRIBE_VARNAME, clazz.getName())  );
+        //dataList.add( new Entity(Data.DESCRIBE_VARNAME, clazz.getName())  );
+
         String fieldNameRaw, fieldName, fieldValueString;
         Object fieldValueRaw;
         boolean isNotAccessible;
@@ -80,6 +80,10 @@ public class Service {
             }
             catch (IllegalAccessException e) {
                 System.out.println("Произошла ошибка чтения поля" + fieldNameRaw);
+                //По хорошему надо возвращать объект класса типа Answer, состоящий из возвращаемой
+                //строки и некого Enum, по которому будем судить об успехе/ошибке в данном методе.
+                //Таким образом, из данного метода вынесем все сообщения (sout-ы).
+                //Такой же объект можно возвращать и из getCustomFormattedDate().
                 e.printStackTrace();
                 return null;
             }
@@ -87,11 +91,11 @@ public class Service {
 
             //Проверим, не требуется ли нам некое особое форматирование даты:
             if ( isCustomDateFormatNeed(field) ) { //да, требуется
-                fieldValueString = getCustomFormattedDate(field, fieldNameRaw, fieldValueRaw);
+                fieldValueString = getCustomFormattedDate(field, fieldValueRaw);
                 if (fieldValueString == null) {
                     System.out.println(
-                        "Поле " + fieldNameRaw +
-                        ": недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() +
+                        "Поле " + fieldNameRaw + ": " +
+                        "недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() +
                         " или указан неверный формат даты"
                     );
                     return null;
@@ -135,24 +139,21 @@ public class Service {
     /*Преобразование LocalDate в кастомный формат (согласно аргументу аннотации).
     Если это не LocalDate или был указан ошибочный формат даты, вернет null.
     */
-    private static String getCustomFormattedDate(Field field, String fieldName, Object fieldValue) {
+    private static String getCustomFormattedDate(Field field, Object fieldValue) {
         String customFormattedDate;
 
         //Это именно LocalDate?
         if ( field.getType() != LocalDate.class ) {
-            //System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldName);
-            return null;
+            return null; //нет, не LocalDate
         }
         String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
         try {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
             customFormattedDate = ((LocalDate)fieldValue).format(dateFormatter);
         }
-        catch (DateTimeParseException | IllegalArgumentException e) {
-            //System.out.println("Для поля " + fieldName + " указан неверный формат даты: " + dateFormatCustom);
+        catch (DateTimeException | IllegalArgumentException e) {
             return null;
         }
-
         return customFormattedDate;
     }
 

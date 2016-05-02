@@ -34,5 +34,4 @@ public class User {
         this.computerPowerLevel = computerPowerLevel;
     }
 
-    //Где-то здесь могут быть геттеры, сеттеры и прочие методы...
 }
