@@ -4,6 +4,8 @@ import ua.skillsup.demitt.reflection.annotation.CustomDateFormat;
 import ua.skillsup.demitt.reflection.annotation.JsonValue;
 import ua.skillsup.demitt.reflection.data.Data;
 import ua.skillsup.demitt.reflection.data.Entity;
+import ua.skillsup.demitt.reflection.io.Storage;
+import ua.skillsup.demitt.reflection.laboratory.User;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
@@ -12,12 +14,38 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Jsoner {
+public class Service {
+
+    public static void start() {
+
+        System.out.println("Reflection API.");
+
+        User obj = new User(null, "Дибенко", LocalDate.of(1980, 3, 23), "Человек-без-лица", LocalDate.of(2012, 4, 16), "Ubuntu 12.04", 42, 100);
+
+        String jsonString = Service.objectToJson(obj);
+        if (jsonString == null) {
+            System.out.println("Паникуем и прекращаем работу.");
+            return;
+        }
+        System.out.println("Прочли поля класса в JSON:");
+        System.out.println(jsonString);
+
+        boolean writeResult = Storage.writeFile(jsonString);
+        if (!writeResult) {
+            System.out.println("Записать в файл не удалось. Печаль.");
+            return;
+        }
+        System.out.println("Записали данные в файл.");
+
+        //TODO
+        //String readedJsonString = Storage.readFile();
+    }
+
 
     /*Получение JSON-представления полей экземпляра класса.
     В случае ошибки вернет null.
     */
-    public static String toJson(Object obj) {
+    public static String objectToJson(Object obj) {
         Class clazz = obj.getClass();
         List<Entity> dataList = new ArrayList<>();
 
@@ -32,7 +60,7 @@ public class Jsoner {
             //Получаем имя поля:
 
             fieldNameRaw = field.getName();
-            if ( customNameNeed(field) ) {
+            if ( isCustomFieldNameNeed(field) ) {
                 fieldName = field.getAnnotation(JsonValue.class).value();
             } else {
                 fieldName = fieldNameRaw;
@@ -60,7 +88,7 @@ public class Jsoner {
 
             //Проверим, не требуется ли нам некое особое форматирование даты:
 
-            if ( customDateFormatNeed(field) ) { //да, требуется
+            if ( isCustomDateFormatNeed(field) ) { //да, требуется
                 //Это именно LocalDate?
                 if ( field.getType() != LocalDate.class ) {
                     System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldNameRaw);
@@ -84,11 +112,12 @@ public class Jsoner {
 
             dataList.add( new Entity(fieldName, fieldValueString) );
         }
-        
-        return getObjectString(dataList);
+
+        return getObjectJsonString(dataList);
     }
 
-    private static String getObjectString(List<Entity> dataList) {
+
+    private static String getObjectJsonString(List<Entity> dataList) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
         int length = dataList.size();
@@ -103,11 +132,13 @@ public class Jsoner {
         return sb.toString();
     }
 
-    private static boolean customDateFormatNeed(Field field) {
+
+    private static boolean isCustomDateFormatNeed(Field field) {
         return field.isAnnotationPresent(CustomDateFormat.class);
     }
 
-    private static boolean customNameNeed(Field field) {
+
+    private static boolean isCustomFieldNameNeed(Field field) {
         return field.isAnnotationPresent(JsonValue.class);
     }
 
