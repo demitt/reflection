@@ -24,10 +24,10 @@ public class ServiceTest {
 
     }*/
 
-    @Test
+    /*@Test
     public void testStart() throws Exception {
 
-    }
+    }*/
 
     @Test
     public void testObjectToJson_InvalidAnno1() throws Exception {
@@ -42,7 +42,7 @@ public class ServiceTest {
         В этом случае мы будем тестить именно *его* внутренности.
          */
         //Then
-        Assert.assertEquals("CustomDateFormat повешен НЕ на LocalDate", expectedOnError, result);
+        Assert.assertEquals("CustomDateFormat повешен НЕ на LocalDate", this.expectedOnError, result);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ServiceTest {
         TestingUser_2 obj = new TestingUser_2(LocalDate.of(1980, 10, 25));
         Object result = Service.objectToJson(obj);
         //Then
-        Assert.assertEquals("Указан неправильный кастомный формат даты", expectedOnError, result);
+        Assert.assertEquals("Указан неправильный кастомный формат даты", this.expectedOnError, result);
 
     }
 
@@ -72,7 +72,7 @@ public class ServiceTest {
     /*@Test
     public void testIsCustomDateFormatNeed() throws Exception {
         //Given
-        Field field = new Field(LocalDate.class, "someField", LocalDate.class);
+        Field field = new Field(LocalDate.class, "someField", LocalDate.class); // :-(
     }*/
 
 }
