@@ -50,8 +50,7 @@ public class Service {
         List<Entity> dataList = new ArrayList<>();
 
         dataList.add( new Entity(Data.DESCRIBE_VARNAME, clazz.getName())  );
-        String fieldNameRaw, fieldName;
-        String fieldValueString = null;
+        String fieldNameRaw, fieldName, fieldValueString;
         Object fieldValueRaw;
         boolean isNotAccessible;
         for (Field field : clazz.getDeclaredFields()) {
@@ -66,7 +65,7 @@ public class Service {
                 fieldName = fieldNameRaw;
             }
 
-            //Получаем тип и значение поля:
+            //Получаем значение поля:
 
             if (!field.isAccessible()) {
                 field.setAccessible(true);
@@ -87,20 +86,14 @@ public class Service {
             fieldValueString = fieldValueRaw.toString();
 
             //Проверим, не требуется ли нам некое особое форматирование даты:
-
             if ( isCustomDateFormatNeed(field) ) { //да, требуется
-                //Это именно LocalDate?
-                if ( field.getType() != LocalDate.class ) {
-                    System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldNameRaw);
-                    return null;
-                }
-                String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
-                try {
-                    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
-                    fieldValueString = ((LocalDate)fieldValueRaw).format(dateFormatter);
-                }
-                catch (DateTimeParseException | IllegalArgumentException e) {
-                    System.out.println("Для поля " + fieldNameRaw + " указан неверный формат даты: " + dateFormatCustom);
+                fieldValueString = getCustomFormattedDate(field, fieldNameRaw, fieldValueRaw);
+                if (fieldValueString == null) {
+                    System.out.println(
+                        "Поле " + fieldNameRaw +
+                        ": недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() +
+                        " или указан неверный формат даты"
+                    );
                     return null;
                 }
             }
@@ -115,7 +108,6 @@ public class Service {
 
         return getObjectJsonString(dataList);
     }
-
 
     private static String getObjectJsonString(List<Entity> dataList) {
         StringBuilder sb = new StringBuilder();
@@ -132,14 +124,36 @@ public class Service {
         return sb.toString();
     }
 
-
     private static boolean isCustomDateFormatNeed(Field field) {
         return field.isAnnotationPresent(CustomDateFormat.class);
     }
 
-
     private static boolean isCustomFieldNameNeed(Field field) {
         return field.isAnnotationPresent(JsonValue.class);
+    }
+
+    /*Преобразование LocalDate в кастомный формат (согласно аргументу аннотации).
+    Если это не LocalDate или был указан ошибочный формат даты, вернет null.
+    */
+    private static String getCustomFormattedDate(Field field, String fieldName, Object fieldValue) {
+        String customFormattedDate;
+
+        //Это именно LocalDate?
+        if ( field.getType() != LocalDate.class ) {
+            //System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldName);
+            return null;
+        }
+        String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
+        try {
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
+            customFormattedDate = ((LocalDate)fieldValue).format(dateFormatter);
+        }
+        catch (DateTimeParseException | IllegalArgumentException e) {
+            //System.out.println("Для поля " + fieldName + " указан неверный формат даты: " + dateFormatCustom);
+            return null;
+        }
+
+        return customFormattedDate;
     }
 
 }
