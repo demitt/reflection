@@ -40,6 +40,11 @@ public class ServiceTest {
         Может быть, здесь и в следующем тесте надо вызывать рефлексией приватный метод getCustomFormattedDate()
         и скармливать ему только одно поле (также аолученное рефлексией)?
         В этом случае мы будем тестить именно *его* внутренности.
+
+        Method m = Service.class.getDeclaredMethod("getCustomFormattedDate", Field.class, Object.class);
+        m.setAccessible(true);
+        Assert.assertEquals("CustomDateFormat был повешен на НЕ LocalDate", null, m.invoke(obj, Field.class, Object.class));
+        М.б. вместо obj надо null, т.к. метод статический.
          */
         //Then
         Assert.assertEquals("CustomDateFormat повешен НЕ на LocalDate", this.expectedOnError, result);
