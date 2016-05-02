@@ -10,7 +10,7 @@ public class App {
     public static void main(String[] args) {
         System.out.println("Reflection API.");
 
-        User obj = new User(null, "Дибенко", LocalDate.of(1980, 03, 23), "Человек-без-лица", LocalDate.of(2012, 4, 16), "Ubuntu 12.04", 42, 100);
+        User obj = new User(null, "Дибенко", LocalDate.of(1980, 3, 23), "Человек-без-лица", LocalDate.of(2012, 4, 16), "Ubuntu 12.04", 42, 100);
 
         String jsonString = Jsoner.toJson(obj);
         if (jsonString == null) {
@@ -27,7 +27,7 @@ public class App {
         }
         System.out.println("Записали данные в файл.");
 
-        //TODO...
+        //TODO
         //String readedJsonString = Storage.readFile();
 
 

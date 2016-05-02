@@ -3,7 +3,6 @@ package ua.skillsup.demitt.reflection.service;
 import ua.skillsup.demitt.reflection.annotation.CustomDateFormat;
 import ua.skillsup.demitt.reflection.annotation.JsonValue;
 import ua.skillsup.demitt.reflection.data.Data;
-import ua.skillsup.demitt.reflection.data.DataType;
 import ua.skillsup.demitt.reflection.data.Entity;
 
 import java.lang.reflect.Field;
@@ -22,16 +21,16 @@ public class Jsoner {
         Class clazz = obj.getClass();
         List<Entity> dataList = new ArrayList<>();
 
-        dataList.add( new Entity(Data.DESCRIBE_VARNAME, DataType.STRING, clazz.getName())  );
-        String fieldNameRaw, fieldName, fieldTypeString, fieldValueString = null;
+        dataList.add( new Entity(Data.DESCRIBE_VARNAME, clazz.getName())  );
+        String fieldNameRaw, fieldName;
+        String fieldValueString = null;
         Object fieldValueRaw;
-        boolean typeIsFound, isNotAccessible;
-        DataType dataType = null;
-        nextField:
+        boolean isNotAccessible;
         for (Field field : clazz.getDeclaredFields()) {
             isNotAccessible = false;
 
             //Получаем имя поля:
+
             fieldNameRaw = field.getName();
             if ( customNameNeed(field) ) {
                 fieldName = field.getAnnotation(JsonValue.class).value();
@@ -41,66 +40,41 @@ public class Jsoner {
 
             //Получаем тип и значение поля:
 
-            fieldTypeString = field.getType().getSimpleName();
-
             if (!field.isAccessible()) {
                 field.setAccessible(true);
                 isNotAccessible = true;
             }
 
-            typeIsFound = false;
-
-            //TODO вынести в метод?
-            for (DataType currDataType : DataType.values()) { //по всем эл-там перечисления (а это список типов)
-                if (fieldTypeString.equals(currDataType.getType())) { //да, это наш тип
-                    dataType = currDataType;
-                    typeIsFound = true; //"ура, мы наши этот тип в нашем списке!"
-
-                    //Получаем тип:
-                    /*Тип уже находится в переменной fieldTypeString.
-                    А вот если бы мы для маркировки типа использовали не его джавовское написание, а некое свое
-                    (например, для типа int использовали бы не строку "int", а строку "целое примитивное"),
-                    то здесь бы мы вызвали метод, возвращающий эту строку.*/
-
-                    //Получаем значение:
-                    try {
-                        if (field.get(obj) == null) {
-                            continue nextField;
-                        }
-                        fieldValueRaw = field.get(obj);
-                    }
-                    catch (IllegalAccessException e) {
-                        System.out.println("Произошла ошибка чтения поля" + fieldNameRaw);
-                        e.printStackTrace();
-                        return null;
-                    }
-                    fieldValueString = fieldValueRaw.toString();
-
-                    //Проверим, не требуется ли нам некое особое форматирование даты:
-                    if ( customDateFormatNeed(field) ) { //да, требуется
-                        //Проверим, чтобы это было именно DataType.LOCALDATE:
-                        if (!fieldTypeString.equals(DataType.LOCALDATE.getType())) {
-                            System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldNameRaw);
-                            return null;
-                        }
-                        String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
-                        try {
-                            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
-                            fieldValueString = ((LocalDate)fieldValueRaw).format(dateFormatter);
-                        }
-                        catch (DateTimeParseException | IllegalArgumentException e) {
-                            System.out.println("Для поля " + fieldNameRaw + " указан неверный формат даты: " + dateFormatCustom);
-                            return null;
-                        }
-                    }
-
+            try {
+                if (field.get(obj) == null) {
+                    continue;
                 }
+                fieldValueRaw = field.get(obj);
             }
-
-            //Если тип поля не найден в нашем списке:
-            if (!typeIsFound) {
-                System.out.println("Тип поля не найден в списке");
+            catch (IllegalAccessException e) {
+                System.out.println("Произошла ошибка чтения поля" + fieldNameRaw);
+                e.printStackTrace();
                 return null;
+            }
+            fieldValueString = fieldValueRaw.toString();
+
+            //Проверим, не требуется ли нам некое особое форматирование даты:
+
+            if ( customDateFormatNeed(field) ) { //да, требуется
+                //Это именно LocalDate?
+                if ( field.getType() != LocalDate.class ) {
+                    System.out.println("Недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() + " вместе с полем " + fieldNameRaw);
+                    return null;
+                }
+                String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
+                try {
+                    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
+                    fieldValueString = ((LocalDate)fieldValueRaw).format(dateFormatter);
+                }
+                catch (DateTimeParseException | IllegalArgumentException e) {
+                    System.out.println("Для поля " + fieldNameRaw + " указан неверный формат даты: " + dateFormatCustom);
+                    return null;
+                }
             }
 
             //Убираем за собой: закрываем доступ к полю (если он был):
@@ -108,10 +82,9 @@ public class Jsoner {
                 field.setAccessible(false);
             }
 
-            dataList.add( new Entity(fieldName, dataType, fieldValueString) );
+            dataList.add( new Entity(fieldName, fieldValueString) );
         }
-
-
+        
         return getObjectString(dataList);
     }
 
