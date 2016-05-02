@@ -1,6 +1,7 @@
-# 03_Reflection
-#
+# Reflection
+
 out/*
+target/*
 .idea/*
 *.iml
 *.json
