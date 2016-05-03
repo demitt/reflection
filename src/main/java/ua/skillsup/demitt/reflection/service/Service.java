@@ -3,6 +3,7 @@ package ua.skillsup.demitt.reflection.service;
 import ua.skillsup.demitt.reflection.annotation.CustomDateFormat;
 import ua.skillsup.demitt.reflection.annotation.JsonValue;
 import ua.skillsup.demitt.reflection.data.Entity;
+import ua.skillsup.demitt.reflection.data.ErrorData;
 import ua.skillsup.demitt.reflection.io.Storage;
 import ua.skillsup.demitt.reflection.laboratory.User;
 
@@ -78,24 +79,18 @@ public class Service {
             }
             catch (IllegalAccessException e) {
                 System.out.println("Произошла ошибка чтения поля" + fieldNameRaw);
-                //По хорошему надо возвращать объект класса типа Answer, состоящий из возвращаемой
-                //строки и некого Enum, по которому будем судить об успехе/ошибке в данном методе.
-                //Таким образом, из данного метода вынесем все сообщения (sout-ы).
-                //Такой же объект можно возвращать и из getCustomFormattedDate().
-                e.printStackTrace();
+                //e.printStackTrace();
                 return null;
             }
             fieldValueString = fieldValueRaw.toString();
 
             //Проверим, не требуется ли нам некое особое форматирование даты:
             if ( isCustomDateFormatNeed(field) ) { //да, требуется
-                fieldValueString = getCustomFormattedDate(field, fieldValueRaw);
-                if (fieldValueString == null) {
-                    System.out.println(
-                        "Поле " + fieldNameRaw + ": " +
-                        "недопустимое использование аннотации " + CustomDateFormat.class.getSimpleName() +
-                        " или указан неверный формат даты"
-                    );
+                AnswerData answer = getCustomFormattedDate(field, fieldValueRaw);
+                if (answer.isOk()) {
+                    fieldValueString = answer.getValue();
+                } else {
+                    System.out.println("Поле " + fieldNameRaw + ": " + answer.getErrorData().getMessage());
                     return null;
                 }
             }
@@ -137,45 +132,54 @@ public class Service {
     /*Преобразование LocalDate в кастомный формат (согласно аргументу аннотации).
     Если это не LocalDate или был указан ошибочный формат даты, вернет null.
     */
-    private static String getCustomFormattedDate(Field field, Object fieldValue) {
+    private static AnswerData getCustomFormattedDate(Field field, Object fieldValue) {
         String customFormattedDate;
 
         //Это именно LocalDate?
         if ( field.getType() != LocalDate.class ) {
-            return null; //нет, не LocalDate
+            return new AnswerData(ErrorData.ILLEGAL_ANNO_USAGE);
         }
+
         String dateFormatCustom = field.getAnnotation(CustomDateFormat.class).format();
         try {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormatCustom);
             customFormattedDate = ((LocalDate)fieldValue).format(dateFormatter);
         }
         catch (DateTimeException | IllegalArgumentException e) {
-            return null;
+            //e.printStackTrace();
+            return new AnswerData(ErrorData.INVALID_DATE_FORMAT);
         }
-        return customFormattedDate;
+        return new AnswerData(customFormattedDate);
     }
 
-    /*public static class Answer {
+    public static class AnswerData {
         private boolean ok;
-        private String message;
+        private String value;
+        private ErrorData errorData;
 
-        public Answer(String message) {
+        public AnswerData(ErrorData errorData) {
             this.ok = false;
-            this.message = message;
+            this.value = null;
+            this.errorData = errorData;
         }
 
-        public Answer(boolean ok) {
-            this.ok = ok;
-            this.message = null;
+        public AnswerData(String value) {
+            this.ok = true;
+            this.value = value;
+            this.errorData = null;
         }
 
         public boolean isOk() {
             return this.ok;
         }
 
-        public String getMessage() {
-            return this.message;
+        public ErrorData getErrorData() {
+            return errorData;
         }
-    }*/
+
+        public String getValue() {
+            return this.value;
+        }
+    }
 
 }
