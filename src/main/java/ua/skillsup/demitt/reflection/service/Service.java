@@ -48,8 +48,6 @@ public class Service {
         Class clazz = obj.getClass();
         List<Entity> dataList = new ArrayList<>();
 
-        //dataList.add( new Entity(Data.DESCRIBE_VARNAME, clazz.getName())  );
-
         String fieldNameRaw, fieldName, fieldValueString;
         Object fieldValueRaw;
         boolean isNotAccessible;
@@ -156,5 +154,28 @@ public class Service {
         }
         return customFormattedDate;
     }
+
+    /*public static class Answer {
+        private boolean ok;
+        private String message;
+
+        public Answer(String message) {
+            this.ok = false;
+            this.message = message;
+        }
+
+        public Answer(boolean ok) {
+            this.ok = ok;
+            this.message = null;
+        }
+
+        public boolean isOk() {
+            return this.ok;
+        }
+
+        public String getMessage() {
+            return this.message;
+        }
+    }*/
 
 }

@@ -3,11 +3,12 @@ package ua.skillsup.demitt.reflection.service;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import ua.skillsup.demitt.reflection.service.laboratory.TestingUser_1;
-import ua.skillsup.demitt.reflection.service.laboratory.TestingUser_2;
-import ua.skillsup.demitt.reflection.service.laboratory.TestingUser_3;
+import ua.skillsup.demitt.reflection.service.laboratory.User_IllegalAnnoUse;
+import ua.skillsup.demitt.reflection.service.laboratory.User_IllegalDateFormat;
+import ua.skillsup.demitt.reflection.service.laboratory.User_EmptyFieldName;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 
 public class ServiceTest {
@@ -30,54 +31,44 @@ public class ServiceTest {
     }*/
 
     @Test
-    public void testObjectToJson_InvalidAnno1() throws Exception {
+    public void testGetCustomFormattedDate_illeganAnnoUse() throws Exception {
         //Given
-        //...
-        //When
-        TestingUser_1 obj = new TestingUser_1("login");
-        Object result = Service.objectToJson(obj);
-        /*
-        Может быть, здесь и в следующем тесте надо вызывать рефлексией приватный метод getCustomFormattedDate()
-        и скармливать ему только одно поле (также аолученное рефлексией)?
-        В этом случае мы будем тестить именно *его* внутренности.
-
+        User_IllegalAnnoUse obj = new User_IllegalAnnoUse("myLogin");
+        Field field = obj.getClass().getDeclaredField("login");
+        field.setAccessible(true);
+        Object value = field.get(obj);
         Method m = Service.class.getDeclaredMethod("getCustomFormattedDate", Field.class, Object.class);
         m.setAccessible(true);
-        Assert.assertEquals("CustomDateFormat был повешен на НЕ LocalDate", null, m.invoke(obj, Field.class, Object.class));
-        М.б. вместо obj надо null, т.к. метод статический.
-         */
+        //When
+        Object resultObj = m.invoke(obj, field, value);
         //Then
-        Assert.assertEquals("CustomDateFormat повешен НЕ на LocalDate", this.expectedOnError, result);
+        Assert.assertEquals("CustomDateFormat был повешен на НЕ LocalDate", expectedOnError, resultObj);
     }
 
     @Test
     @Ignore("TODO: признать формат даты невалидным, если в нем нет минимального набора спецсимволов. Видимо, только регуляркой.")
-    public void testObjectToJson_InvalidAnno2() throws Exception {
+    public void testGetCustomFormattedDate_illegalDateFormat() throws Exception {
         //Given
-        //...
+        User_IllegalDateFormat obj = new User_IllegalDateFormat(LocalDate.of(1980, 10, 25));
+        Field field = obj.getClass().getDeclaredField("dateFrom");
+        field.setAccessible(true);
+        Object value = field.get(obj);
+        Method m = Service.class.getDeclaredMethod("getCustomFormattedDate", Field.class, Object.class);
+        m.setAccessible(true);
         //When
-        TestingUser_2 obj = new TestingUser_2(LocalDate.of(1980, 10, 25));
-        Object result = Service.objectToJson(obj);
+        Object resultObj = m.invoke(obj, field, value);
         //Then
-        Assert.assertEquals("Указан неправильный кастомный формат даты", this.expectedOnError, result);
-
+        Assert.assertEquals("Указан неправильный кастомный формат даты", expectedOnError, resultObj);
     }
 
     @Test
     public void testObjectToJson_EmptyCustomFieldName() throws Exception {
         //Given
-        //...
+        User_EmptyFieldName obj = new User_EmptyFieldName("Ubuntu 12.04 LTS");
         //When
-        TestingUser_3 obj = new TestingUser_3("Ubuntu 12.04 LTS");
         String resultString = Service.objectToJson(obj);
         //Then
         Assert.assertNotEquals("Пустая строка в кастомном имени поля - вернуло null!", expectedOnError, resultString);
     }
-
-    /*@Test
-    public void testIsCustomDateFormatNeed() throws Exception {
-        //Given
-        Field field = new Field(LocalDate.class, "someField", LocalDate.class); // :-(
-    }*/
 
 }

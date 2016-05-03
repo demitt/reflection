@@ -4,13 +4,13 @@ import ua.skillsup.demitt.reflection.annotation.CustomDateFormat;
 
 import java.time.LocalDate;
 
-public class TestingUser_1 {
+public class User_IllegalAnnoUse {
 
     private String firstName;
     @CustomDateFormat(format="yyyy.MM.dd") //применили к полю не того типа
     private String login;
 
-    public TestingUser_1(String login) {
+    public User_IllegalAnnoUse(String login) {
         this.login = login;
     }
 
