@@ -36,9 +36,6 @@ public class Service {
             return;
         }
         System.out.println("Записали данные в файл.");
-
-        //TODO
-        //String readJsonString = Storage.readFile();
     }
 
 

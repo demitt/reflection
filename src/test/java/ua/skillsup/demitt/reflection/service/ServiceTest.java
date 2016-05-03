@@ -14,22 +14,8 @@ import java.time.LocalDate;
 
 public class ServiceTest {
 
-    /*@Before
-    public void setUp() throws Exception {
-
-    }*/
-
-    /*@After
-    public void tearDown() throws Exception {
-
-    }*/
-
-    /*@Test
-    public void testStart() throws Exception {
-
-    }*/
-
     @Test
+    //Экперимент: тестируем приватный метод
     public void testGetCustomFormattedDate_illeganAnnoUsage() throws Exception {
         //Given
         ErrorData expected = ErrorData.ILLEGAL_ANNO_USAGE;
@@ -46,7 +32,9 @@ public class ServiceTest {
     }
 
     @Test
-    @Ignore("TODO: признать формат даты невалидным, если в нем нет минимального набора спецсимволов. Видимо, только регуляркой.")
+    //Экперимент: тестируем приватный метод
+    @Ignore("TODO: признать формат даты невалидным, если в нем нет минимального набора спецсимволов. " +
+        "Видимо, такая проверка возможна только регуляркой.")
     public void testGetCustomFormattedDate_illegalDateFormat() throws Exception {
         //Given
         ErrorData expected = ErrorData.INVALID_DATE_FORMAT;
